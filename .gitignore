@@ -35,3 +35,6 @@ hs_err_pid*.log
 
 # Don't commit the user-local NeoForge userdev cache
 .neoforge/
+
+# Claude Code session state (worktrees etc.)
+.claude/
