@@ -1,0 +1,37 @@
+.gradle/
+build/
+out/
+classes/
+
+# Generated resources from data generation
+src/generated/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime / dev launch dirs
+run/
+runs/
+run-data/
+
+# Maven publishing output
+repo/
+
+# Logs
+*.log
+hs_err_pid*.log
+
+# Don't commit the user-local NeoForge userdev cache
+.neoforge/
