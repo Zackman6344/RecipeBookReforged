@@ -99,7 +99,7 @@ public final class RecipeIndex {
 
     // --- Defensive wrappers --------------------------------------------------
 
-    private static List<Ingredient> safeGetIngredients(RecipeHolder<?> h) {
+    static List<Ingredient> safeGetIngredients(RecipeHolder<?> h) {
         try {
             Recipe<?> r = h.value();
             List<Ingredient> list = r.getIngredients();
@@ -112,7 +112,7 @@ public final class RecipeIndex {
         }
     }
 
-    private static ItemStack[] safeGetIngredientItems(Ingredient ing, RecipeHolder<?> h) {
+    static ItemStack[] safeGetIngredientItems(Ingredient ing, RecipeHolder<?> h) {
         try {
             ItemStack[] stacks = ing.getItems();
             return stacks == null ? new ItemStack[0] : stacks;

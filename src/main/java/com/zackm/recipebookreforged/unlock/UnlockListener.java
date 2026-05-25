@@ -2,6 +2,7 @@ package com.zackm.recipebookreforged.unlock;
 
 import com.zackm.recipebookreforged.Attachments;
 import com.zackm.recipebookreforged.RecipeBookReforgedMod;
+import com.zackm.recipebookreforged.config.Config;
 import com.zackm.recipebookreforged.data.PlayerUnlockData;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +19,8 @@ import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
+import java.util.Set;
+
 /**
  * Server-side event handlers that drive the unlock pipeline.
  *
@@ -25,8 +28,8 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
  * relevant event, mutates the player's {@link PlayerUnlockData} and logs newly unlocked
  * recipes to the server console.
  *
- * <p>For step #3 the unlock rule is hard-coded ANY (a recipe unlocks the moment one of
- * its ingredients is seen). Step #4 introduces the {@code Policy} switch + ALL.
+ * <p>The active unlock rule is supplied by {@link Config#activePolicy()} &mdash;
+ * see {@link Policy} for the two implementations (ANY / ALL).
  */
 @EventBusSubscriber(modid = RecipeBookReforgedMod.MODID)
 public final class UnlockListener {
@@ -84,10 +87,14 @@ public final class UnlockListener {
     // --- Core ----------------------------------------------------------------
 
     /**
-     * Mark an item as seen for this player; under the current ANY policy, also unlock
-     * every recipe in the reverse index that uses this item.
+     * Mark an item as seen for this player; then re-evaluate every recipe in the
+     * reverse index that uses this item, unlocking each one that the active
+     * {@link Policy} now considers satisfied.
+     *
+     * <p>Public so the commands package can call this after a reset to repopulate
+     * unlock state from the player's current inventory.
      */
-    private static void processItem(ServerPlayer player, Item item) {
+    public static void processItem(ServerPlayer player, Item item) {
         if (item == Items.AIR) return;
 
         PlayerUnlockData data = player.getData(Attachments.PLAYER_UNLOCK_DATA.get());
@@ -97,9 +104,13 @@ public final class UnlockListener {
         String playerName = player.getName().getString();
         RecipeBookReforgedMod.LOGGER.debug("[{}] seen item: {}", playerName, itemId);
 
+        Policy policy = Config.activePolicy();
+        Set<ResourceLocation> seenItems = data.seenItems();
+
         int newlyUnlocked = 0;
         for (RecipeHolder<?> h : RecipeIndex.get().recipesForItem(item)) {
-            if (data.unlock(h.id())) {
+            if (data.isUnlocked(h.id())) continue;
+            if (policy.isSatisfied(h, seenItems) && data.unlock(h.id())) {
                 RecipeBookReforgedMod.LOGGER.info(
                         "[{}] unlocked recipe: {}", playerName, h.id());
                 newlyUnlocked++;
